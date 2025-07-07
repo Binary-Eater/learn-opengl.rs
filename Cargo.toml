@@ -1,0 +1,18 @@
+[package]
+name = "learn-opengl"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+raw-window-handle = "0.6.2"
+
+# Yuck!!!! Cannot use system libs that are not statically linked glfw....
+# NixOS can user an overlay to do this but might as well build for source locally
+# cmake time.....
+#
+#         match pkg_config::Config::new()
+#            .statik(features.static_link)
+#
+# https://github.com/PistonDevelopers/glfw-sys/blob/ee8e5f00692cfe20337b7603dbd4e65d6ff650a5/build.rs#L49-L50
+[dependencies.glfw]
+version = "*"
