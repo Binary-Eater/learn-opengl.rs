@@ -15,21 +15,20 @@ pkgs.mkShell rec {
     # This builds cmake from source....
     (cmake.overrideAttrs (final: prev: {
       # TODO grab version and clip off patch version number
-      postFixup = prev.postFixup + "\n" + lib.concatStringsSep "\n" [ 
-        "sed -i 's|/var/empty/X11/lib|${pkgs.xorg.libX11.dev}/include|' $out/share/cmake-3.30/Modules/FindX11.cmake"
-        "sed -i 's|/var/empty/X11/lib|${pkgs.xorg.libX11.out}/lib|' $out/share/cmake-3.30/Modules/FindX11.cmake"
+      postFixup = prev.postFixup + "\n" + lib.concatStringsSep "\n" [
+        "sed -i 's|/var/empty/X11/include|${pkgs.xorg.xorgproto}/include\\n${pkgs.xorg.libX11.dev}/include\\n${pkgs.xorg.libXrandr.dev}/include\\n${pkgs.xorg.libXinerama.dev}/include\\n${pkgs.xorg.libXcursor.dev}/include\\n${pkgs.xorg.libXi.dev}/include|' $out/share/cmake-3.30/Modules/FindX11.cmake"
+        "sed -i 's|/var/empty/X11/lib|${pkgs.xorg.libX11.out}/lib\\n${pkgs.xorg.libXrandr.out}/lib\\n${pkgs.xorg.libXinerama.out}/lib\\n${pkgs.xorg.libXcursor.out}/lib\\n${pkgs.xorg.libXi.out}/lib|' $out/share/cmake-3.30/Modules/FindX11.cmake"
       ];
     }))
   ];
 
-  # For glfw-sys
-  X11_X11_INCLUDE_PATH = "${pkgs.xorg.libX11.dev}/include";
-  X11_X11_LIB = "${pkgs.xorg.libX11.out}/lib/libX11.so";
+  C_INCLUDE_PATH = "${pkgs.xorg.libX11.dev}/include:${pkgs.xorg.libXrender.dev}/include:${pkgs.xorg.libXext.dev}/include:${pkgs.xorg.libXfixes.dev}/include";
+  LIBRARY_PATH = "${pkgs.xorg.libX11.out}/lib:${pkgs.xorg.libXrender.out}/lib:${pkgs.xorg.libXext.out}/lib:${pkgs.xorg.libXfixes.out}/lib";
 
   # Cannot be used by glfw-sys as-is without static linking Nix overlay
-  C_INCLUDE_PATH = "${pkgs.xorg.libX11.dev}/include:${pkgs.glfw}/include";
-  LIBRARY_PATH = "${pkgs.xorg.libX11.out}/lib:${pkgs.glfw}/lib";
-  PKG_CONFIG_PATH = "${pkgs.glfw}/lib/pkgconfig";
+  #C_INCLUDE_PATH = "${pkgs.glfw}/include";
+  #LIBRARY_PATH = "${pkgs.glfw}/lib";
+  #PKG_CONFIG_PATH = "${pkgs.glfw}/lib/pkgconfig";
 
   OPENSSL_DEV = pkgs.openssl.dev;
   RUSTC_VERSION = "stable-2025-06-26";
