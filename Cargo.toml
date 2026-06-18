@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 raw-window-handle = "0.6.2"
+gl = "*"
 
 # Yuck!!!! Cannot use system libs that are not statically linked glfw....
 # NixOS can user an overlay to do this but might as well build for source locally
