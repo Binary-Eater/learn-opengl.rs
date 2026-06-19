@@ -47,7 +47,7 @@ fn main() {
         // rendering commands here
         // TODO write SAFETY comment
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+            gl::ClearColor(0.2_f32, 0.3_f32, 0.3_f32, 1.0_f32);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
