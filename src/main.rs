@@ -29,7 +29,7 @@ fn main() {
     ));
 
     let (mut window, _events) = glfw
-        .create_window(800, 600, "Hello this is window", glfw::WindowMode::Windowed)
+        .create_window(800, 600, "LearnOpenGL.rs", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     /* Implement symbol lookup closure for GL functions */
