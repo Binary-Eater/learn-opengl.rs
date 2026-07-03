@@ -3,8 +3,7 @@ extern crate glfw;
 use glfw::{Context, Window};
 
 fn framebuffer_size_callback(_window: &mut Window, width: i32, height: i32) {
-    // TODO figure out why this is safe and write a SAFETY comment
-    // TIL it's because the functions are dynamically loaded via the symbol lookup...
+    // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
     unsafe {
         gl::Viewport(0, 0, width, height);
     }
@@ -44,8 +43,7 @@ fn main() {
         // input
         process_input(&mut window);
 
-        // rendering commands here
-        // TODO write SAFETY comment
+        // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
         unsafe {
             gl::ClearColor(0.2_f32, 0.3_f32, 0.3_f32, 1.0_f32);
             gl::Clear(gl::COLOR_BUFFER_BIT);
