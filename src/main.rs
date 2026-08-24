@@ -229,6 +229,56 @@ fn main() -> Result<(), String> {
         return Err(error_string);
     }
 
+    let yellow_fragment_shader_source = CString::new(include_str!("../assets/yellow_shader.frag"))
+        .expect("string slice contains an illegal null byte internally");
+    let yellow_fragment_shader: u32;
+
+    success = 0;
+    // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
+    unsafe {
+        yellow_fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+        gl::ShaderSource(
+            yellow_fragment_shader,
+            1,
+            &yellow_fragment_shader_source.as_ptr(),
+            ptr::null(),
+        );
+        gl::CompileShader(yellow_fragment_shader);
+
+        gl::GetShaderiv(
+            yellow_fragment_shader,
+            gl::COMPILE_STATUS,
+            ptr::from_mut(&mut success),
+        );
+        if success == 0 {
+            gl::DeleteShader(vertex_shader);
+            gl::DeleteShader(fragment_shader);
+
+            gl::GetShaderInfoLog(
+                yellow_fragment_shader,
+                info_log_isize,
+                ptr::null_mut(),
+                info_log.as_mut_ptr(),
+            );
+        }
+    }
+
+    if success == 0 {
+        // SAFETY: The i8 values in info_log can safely be represented as u8
+        // since the byte values represent characters.
+        let char_slice: &[u8; 512] = unsafe { std::mem::transmute(&info_log) };
+
+        let error_string = format!(
+            "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: {}",
+            match std::str::from_utf8(char_slice) {
+                Ok(s) => String::from(s),
+                Err(e) => format!("Invalid UTF-8 found in error message: {}", e),
+            },
+        ).trim_end_matches("\0").trim_end().to_string();
+
+        return Err(error_string);
+    }
+
     let shader_program: u32;
 
     success = 0;
@@ -239,7 +289,6 @@ fn main() -> Result<(), String> {
         gl::AttachShader(shader_program, fragment_shader);
         gl::LinkProgram(shader_program);
 
-        gl::DeleteShader(vertex_shader);
         gl::DeleteShader(fragment_shader);
 
         gl::GetProgramiv(
@@ -248,8 +297,55 @@ fn main() -> Result<(), String> {
             ptr::from_mut(&mut success),
         );
         if success == 0 {
+            gl::DeleteShader(vertex_shader);
+            gl::DeleteShader(yellow_fragment_shader);
+
             gl::GetProgramInfoLog(
                 shader_program,
+                info_log_isize,
+                ptr::null_mut(),
+                info_log.as_mut_ptr(),
+            );
+        }
+    }
+
+    if success == 0 {
+        // SAFETY: The i8 values in info_log can safely be represented as u8
+        // since the byte values represent characters.
+        let char_slice: &[u8; 512] = unsafe { std::mem::transmute(&info_log) };
+
+        let error_string = format!(
+            "ERROR::SHADER::PROGRAM::LINKAGE_FAILED: {}",
+            match std::str::from_utf8(char_slice) {
+                Ok(s) => String::from(s),
+                Err(e) => format!("Invalid UTF-8 found in error message: {}", e),
+            },
+        ).trim_end_matches("\0").trim_end().to_string();
+
+        return Err(error_string);
+    }
+
+    let yellow_shader_program: u32;
+
+    success = 0;
+    // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
+    unsafe {
+        yellow_shader_program = gl::CreateProgram();
+        gl::AttachShader(yellow_shader_program, vertex_shader);
+        gl::AttachShader(yellow_shader_program, yellow_fragment_shader);
+        gl::LinkProgram(yellow_shader_program);
+
+        gl::DeleteShader(vertex_shader);
+        gl::DeleteShader(yellow_fragment_shader);
+
+        gl::GetProgramiv(
+            yellow_shader_program,
+            gl::LINK_STATUS,
+            ptr::from_mut(&mut success),
+        );
+        if success == 0 {
+            gl::GetProgramInfoLog(
+                yellow_shader_program,
                 info_log_isize,
                 ptr::null_mut(),
                 info_log.as_mut_ptr(),
@@ -286,6 +382,7 @@ fn main() -> Result<(), String> {
             gl::UseProgram(shader_program);
             gl::BindVertexArray(left_triangle_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::UseProgram(yellow_shader_program);
             gl::BindVertexArray(right_triangle_vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
@@ -303,6 +400,7 @@ fn main() -> Result<(), String> {
         gl::DeleteVertexArrays(1, &right_triangle_vao);
         gl::DeleteBuffers(1, &right_triangle_vbo);
         gl::DeleteProgram(shader_program);
+        gl::DeleteProgram(yellow_shader_program);
     }
 
     /* There is no glfwTerminate call due to Drop trait */
