@@ -40,31 +40,37 @@ fn main() -> Result<(), String> {
     window.make_current(); /* Equivalent to glfwMakeContextCurrent */
     window.set_framebuffer_size_callback(framebuffer_size_callback);
 
-    let vertices: [f32; _] = [
+    let left_triangle_vertices: [f32; _] = [
         /*     x,        y,       z, */
-        // left triangle
         -1.0_f32, -0.5_f32, 0.0_f32,
          0.0_f32, -0.5_f32, 0.0_f32,
         -0.5_f32,  0.5_f32, 0.0_f32,
-        // right triangle
+    ];
+    let right_triangle_vertices: [f32; _] = [
+        /*     x,        y,       z, */
          0.0_f32, -0.5_f32, 0.0_f32,
          0.5_f32,  0.5_f32, 0.0_f32,
          1.0_f32, -0.5_f32, 0.0_f32,
     ];
 
-    let mut vbo: u32 = 0;
-    let mut vao: u32 = 0;
+    /* NOTE: could use an array of VBOs and VAOs for a single Gen* call */
+    let mut left_triangle_vbo: u32 = 0;
+    let mut left_triangle_vao: u32 = 0;
+    let mut right_triangle_vbo: u32 = 0;
+    let mut right_triangle_vao: u32 = 0;
     // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
     unsafe {
-        gl::GenVertexArrays(1, &mut vao);
-        gl::GenBuffers(1, &mut vbo);
+        gl::GenVertexArrays(1, &mut left_triangle_vao);
+        gl::GenBuffers(1, &mut left_triangle_vbo);
+        gl::GenVertexArrays(1, &mut right_triangle_vao);
+        gl::GenBuffers(1, &mut right_triangle_vbo);
 
-        gl::BindVertexArray(vao);
+        gl::BindVertexArray(left_triangle_vao);
 
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, left_triangle_vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,
-            std::mem::size_of_val(&vertices)
+            std::mem::size_of_val(&left_triangle_vertices)
                 .try_into()
                 .expect("failed to represent usize value as an i32"),
             /*
@@ -75,7 +81,39 @@ fn main() -> Result<(), String> {
              *     .try_into()
              *     .expect("failed to represent usize value as an i32"),
             */
-            vertices.as_ptr().cast(), /* cast *const f32 into *const c_void */
+            left_triangle_vertices.as_ptr().cast(), /* cast *const f32 into *const c_void */
+            gl::STATIC_DRAW,
+        );
+
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            (3 * size_of::<f32>())
+                .try_into()
+                .expect("failed to represent usize value as an i32"),
+            ptr::null(),
+        );
+        gl::EnableVertexAttribArray(0);
+
+        gl::BindVertexArray(right_triangle_vao);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, right_triangle_vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            std::mem::size_of_val(&right_triangle_vertices)
+                .try_into()
+                .expect("failed to represent usize value as an i32"),
+            /*
+             * TODO: Might be interesting to debug incorrect size in RenderDoc.
+             *
+             * vertices
+             *     .len()
+             *     .try_into()
+             *     .expect("failed to represent usize value as an i32"),
+            */
+            right_triangle_vertices.as_ptr().cast(), /* cast *const f32 into *const c_void */
             gl::STATIC_DRAW,
         );
 
@@ -246,8 +284,11 @@ fn main() -> Result<(), String> {
             gl::ClearColor(0.2_f32, 0.3_f32, 0.3_f32, 1.0_f32);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(shader_program);
-            gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            gl::BindVertexArray(left_triangle_vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::BindVertexArray(right_triangle_vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
         }
 
         // check and call events and swap the buffers
@@ -257,8 +298,10 @@ fn main() -> Result<(), String> {
 
     // SAFETY: Assume the functions are dynamically loaded via the symbol lookup.
     unsafe {
-        gl::DeleteVertexArrays(1, &vao);
-        gl::DeleteBuffers(1, &vbo);
+        gl::DeleteVertexArrays(1, &left_triangle_vao);
+        gl::DeleteBuffers(1, &left_triangle_vbo);
+        gl::DeleteVertexArrays(1, &right_triangle_vao);
+        gl::DeleteBuffers(1, &right_triangle_vbo);
         gl::DeleteProgram(shader_program);
     }
 
