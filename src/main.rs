@@ -42,9 +42,14 @@ fn main() -> Result<(), String> {
 
     let vertices: [f32; _] = [
         /*     x,        y,       z, */
-        -0.5_f32, -0.5_f32, 0.0_f32,
-         0.5_f32, -0.5_f32, 0.0_f32,
-         0.0_f32,  0.5_f32, 0.0_f32,
+        // left triangle
+        -1.0_f32, -0.5_f32, 0.0_f32,
+         0.0_f32, -0.5_f32, 0.0_f32,
+        -0.5_f32,  0.5_f32, 0.0_f32,
+        // right triangle
+         0.0_f32, -0.5_f32, 0.0_f32,
+         0.5_f32,  0.5_f32, 0.0_f32,
+         1.0_f32, -0.5_f32, 0.0_f32,
     ];
 
     let mut vbo: u32 = 0;
@@ -242,7 +247,7 @@ fn main() -> Result<(), String> {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(shader_program);
             gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
         }
 
         // check and call events and swap the buffers
